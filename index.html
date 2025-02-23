@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barkod Okuyucu</title>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
@@ -12,9 +13,63 @@
                 .catch(error => console.log("Service Worker Hatası:", error));
         }
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        video {
+            width: 100%;
+            max-width: 500px;
+            border: 2px solid black;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <h1>Barkod Okuyucu</h1>
-    <p>Web uygulamanız çalışıyor! Barkod tarayıcısını test edin.</p>
-</body>
-</html>
+    <video id="video" autoplay></video>
+    <button onclick="startScanner()">Barkod Tarayıcıyı Başlat</button>
+    <button onclick="sendEmail()">Mail Gönder</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Malzeme Adı</th>
+                <th>Adet</th>
+                <th>Sil</th>
+            </tr>
+        </thead>
+        <tbody id="barcodeTable"></tbody>
+    </table>
+
+    <script>
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        const barcodeTable = document.getElementById("barcodeTable");
+        let scannedBarcodes = [];
+
+        function startScanner() {
+            codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+                if (result) {
+                    const barcodeData = result.text.split("$");
+                    const material = barcodeData[1] || "Bilinmeyen";
+                    const quantity = barcodeData[3] || "0";
+                    scannedBarcodes.push({ material, quantity });
+                    updateTable();
+                }
+            });
+        }
+
+        function updateTable() {
+            barcodeTable.innerHTML = "";
+            scannedBarcodes.forEach((item, index) => {
+                const row =
