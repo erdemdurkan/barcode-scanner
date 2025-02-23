@@ -23,6 +23,7 @@
             width: 100%;
             max-width: 500px;
             border: 2px solid black;
+            margin-top: 10px;
         }
         table {
             width: 100%;
@@ -39,8 +40,11 @@
 <body>
     <h1>Barkod Okuyucu</h1>
     <video id="video" autoplay></video>
-    <button onclick="startScanner()">Barkod Tarayıcıyı Başlat</button>
-    <button onclick="sendEmail()">Mail Gönder</button>
+    <br>
+    <button onclick="startScanner()">📷 Barkod Tarayıcıyı Başlat</button>
+    <button onclick="sendEmail()">✉ Mail Gönder</button>
+    <button onclick="clearTable()">🗑 Listeyi Temizle</button>
+    
     <table>
         <thead>
             <tr>
@@ -53,11 +57,17 @@
     </table>
 
     <script>
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        const barcodeTable = document.getElementById("barcodeTable");
+        let scannerActive = false;
         let scannedBarcodes = [];
+        const barcodeTable = document.getElementById("barcodeTable");
 
         function startScanner() {
+            if (scannerActive) {
+                alert("Barkod tarayıcı zaten açık!");
+                return;
+            }
+            scannerActive = true;
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("Tarayıcınız kamerayı desteklemiyor!");
                 return;
@@ -71,21 +81,24 @@
                     } else {
                         console.error("Video elementi bulunamadı!");
                     }
+
+                    const codeReader = new ZXing.BrowserMultiFormatReader();
+                    codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+                        if (result && scannerActive) {
+                            scannerActive = false;
+                            const barcodeData = result.text.split("$");
+                            const material = barcodeData[1] || "Bilinmeyen";
+                            const quantity = barcodeData[3] || "0";
+                            scannedBarcodes.push({ material, quantity });
+                            updateTable();
+                        }
+                    });
+
                 })
                 .catch(function (error) {
                     alert("Kamera erişim hatası: " + error.message);
                     console.error("Kamera erişim hatası:", error);
                 });
-
-            codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
-                if (result) {
-                    const barcodeData = result.text.split("$");
-                    const material = barcodeData[1] || "Bilinmeyen";
-                    const quantity = barcodeData[3] || "0";
-                    scannedBarcodes.push({ material, quantity });
-                    updateTable();
-                }
-            });
         }
 
         function updateTable() {
@@ -105,7 +118,17 @@
             updateTable();
         }
 
+        function clearTable() {
+            scannedBarcodes = [];
+            updateTable();
+        }
+
         function sendEmail() {
+            if (scannedBarcodes.length === 0) {
+                alert("Liste boş, mail gönderilemiyor!");
+                return;
+            }
+
             const emailBody = scannedBarcodes.map(item => `Malzeme: ${item.material} - Adet: ${item.quantity}`).join("%0A");
             window.location.href = `mailto:hedefmail@ornek.com?subject=Barkod Talep Listesi&body=${emailBody}`;
         }
