@@ -17,18 +17,58 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
+            background: black;
+            color: white;
+        }
+        #scanner-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         video {
-            width: 100%;
-            max-width: 500px;
-            border: 2px solid black;
-            margin-top: 10px;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
         }
+        #target-box {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border: 4px solid lime;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 0, 0.1);
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .start-btn { background: #4CAF50; color: white; }
+        .clear-btn { background: red; color: white; }
+        .email-btn { background: blue; color: white; }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background: white;
+            color: black;
         }
         th, td {
             border: 1px solid black;
@@ -38,12 +78,16 @@
     </style>
 </head>
 <body>
-    <h1>Barkod Okuyucu</h1>
-    <video id="video" autoplay></video>
-    <br>
-    <button onclick="startScanner()">📷 Barkod Tarayıcıyı Başlat</button>
-    <button onclick="sendEmail()">✉ Mail Gönder</button>
-    <button onclick="clearTable()">🗑 Listeyi Temizle</button>
+    <div id="scanner-container">
+        <video id="video" autoplay></video>
+        <div id="target-box"></div>
+    </div>
+    
+    <div id="controls">
+        <button class="start-btn" onclick="startScanner()">📷 Barkod Tarayıcıyı Başlat</button>
+        <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
+        <button class="clear-btn" onclick="clearTable()">🗑 Listeyi Temizle</button>
+    </div>
     
     <table>
         <thead>
@@ -86,6 +130,8 @@
                     codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
                         if (result && scannerActive) {
                             scannerActive = false;
+                            triggerFeedback(); // 🔊 Bip sesi ve titreşim ekliyoruz
+                            
                             const barcodeData = result.text.split("$");
                             const material = barcodeData[1] || "Bilinmeyen";
                             const quantity = barcodeData[3] || "0";
@@ -99,6 +145,14 @@
                     alert("Kamera erişim hatası: " + error.message);
                     console.error("Kamera erişim hatası:", error);
                 });
+        }
+
+        function triggerFeedback() {
+            if (navigator.vibrate) {
+                navigator.vibrate(200); // 📳 Telefonu 200ms titreştir
+            }
+            const beep = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
+            beep.play(); // 🔊 Bip sesi çal
         }
 
         function updateTable() {
@@ -130,7 +184,7 @@
             }
 
             const emailBody = scannedBarcodes.map(item => `Malzeme: ${item.material} - Adet: ${item.quantity}`).join("%0A");
-            window.location.href = `mailto:erdmdrkn@gmail.com?subject=OD6 Malzeme Talep Listesi hk.&body=${emailBody}`;
+            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Barkod Talep Listesi&body=${emailBody}`;
         }
     </script>
 </body>
