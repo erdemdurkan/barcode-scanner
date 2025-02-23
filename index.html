@@ -29,6 +29,7 @@
         video {
             width: 100%;
             max-width: 500px;
+            height: auto;
             border: 2px solid black;
             margin-top: 10px;
         }
@@ -102,6 +103,7 @@
         let scannedBarcodes = [];
         let scanner;
         let isScanning = false;
+        let cameraStream;
         const barcodeTable = document.getElementById("barcodeTable");
 
         function startScanner() {
@@ -114,12 +116,21 @@
                 .then(function (stream) {
                     let videoElement = document.getElementById("video");
                     videoElement.srcObject = stream;
+                    cameraStream = stream;
                     scanner = new ZXing.BrowserMultiFormatReader();
                 })
                 .catch(function (error) {
                     alert("Kamera erişim hatası: " + error.message);
                     console.error("Kamera erişim hatası:", error);
                 });
+        }
+
+        function stopScanner() {
+            if (cameraStream) {
+                let tracks = cameraStream.getTracks();
+                tracks.forEach(track => track.stop());
+                cameraStream = null;
+            }
         }
 
         function scanBarcode() {
@@ -204,6 +215,7 @@
         function showList() {
             document.getElementById("scanner-container").style.display = "none";
             document.getElementById("list-container").style.display = "block";
+            stopScanner();
         }
 
         showScanner(); // Sayfa açıldığında kamerayı göster
