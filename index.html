@@ -22,14 +22,12 @@
             background: white;
             color: black;
         }
-        #scanner-container, #list-container {
-            display: none;
-            padding: 20px;
+        #scanner-container {
+            padding: 10px;
         }
         video {
             width: 100%;
             max-width: 500px;
-            height: auto;
             border: 2px solid black;
             margin-top: 10px;
         }
@@ -52,7 +50,6 @@
             color: white;
         }
         .start-btn { background: #4CAF50; }
-        .list-btn { background: orange; }
         .email-btn { background: blue; }
         table {
             width: 100%;
@@ -75,27 +72,22 @@
     <!-- Barkod Okuyucu -->
     <div id="scanner-container">
         <video id="video" autoplay></video>
-        <br>
-        <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
     </div>
 
     <!-- Barkod Listesi -->
-    <div id="list-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Malzeme Adı</th>
-                    <th>Adet</th>
-                    <th>Sil</th>
-                </tr>
-            </thead>
-            <tbody id="barcodeTable"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Malzeme Adı</th>
+                <th>Adet</th>
+                <th>Sil</th>
+            </tr>
+        </thead>
+        <tbody id="barcodeTable"></tbody>
+    </table>
 
     <div id="bottom-menu">
-        <button class="start-btn" onclick="showScanner()">📷 Barkod Okuyucu</button>
-        <button class="list-btn" onclick="showList()">📜 Listeyi Göster</button>
+        <button class="start-btn" onclick="scanBarcode()">📷 Barkod Okuyucu</button>
         <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
     </div>
 
@@ -125,14 +117,6 @@
                 });
         }
 
-        function stopScanner() {
-            if (cameraStream) {
-                let tracks = cameraStream.getTracks();
-                tracks.forEach(track => track.stop());
-                cameraStream = null;
-            }
-        }
-
         function scanBarcode() {
             if (!scanner || isScanning) return;
             
@@ -146,7 +130,7 @@
                     
                     scannedBarcodes.push({ material, quantity });
                     updateTable();
-                    setTimeout(() => isScanning = false, 2000);
+                    setTimeout(() => isScanning = false, 1000); // 1 saniye sonra tekrar okutmaya izin ver
                 })
                 .catch((err) => {
                     console.error("Barkod okuma hatası:", err);
@@ -206,19 +190,7 @@
             window.location.href = mailtoLink;
         }
 
-        function showScanner() {
-            document.getElementById("scanner-container").style.display = "block";
-            document.getElementById("list-container").style.display = "none";
-            startScanner();
-        }
-
-        function showList() {
-            document.getElementById("scanner-container").style.display = "none";
-            document.getElementById("list-container").style.display = "block";
-            stopScanner();
-        }
-
-        showScanner(); // Sayfa açıldığında kamerayı göster
+        startScanner(); // Sayfa açıldığında kamerayı başlat
     </script>
 </body>
 </html>
