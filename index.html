@@ -72,6 +72,7 @@
         let scanner;
         let isScanning = false;
         let cameraStream;
+        let barcodeList = JSON.parse(localStorage.getItem("barcodeList")) || []; // 📌 Daha önce eklenen barkodları koru
 
         function startScanner() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -99,8 +100,9 @@
             scanner.decodeOnceFromVideoDevice(undefined, 'video')
                 .then((result) => {
                     const barcodeData = result.text;
-                    localStorage.setItem("lastBarcode", barcodeData); // Barkodu kaydet
-                    window.location.href = "index2.html"; // Listeye yönlendir
+                    barcodeList.push(barcodeData); // 📌 Listeye her okutulan barkodu ekle
+                    localStorage.setItem("barcodeList", JSON.stringify(barcodeList)); // 📌 Barkodları kaydet
+                    setTimeout(() => isScanning = false, 1000);
                 })
                 .catch((err) => {
                     console.error("Barkod okuma hatası:", err);
