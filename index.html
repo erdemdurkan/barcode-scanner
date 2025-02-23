@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkod Okuyucu</title>
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(() => console.log("Service Worker Kaydedildi!"))
+                .catch(error => console.log("Service Worker Hatası:", error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Barkod Okuyucu</h1>
+    <p>Web uygulamanız çalışıyor! Barkod tarayıcısını test edin.</p>
+</body>
+</html>
