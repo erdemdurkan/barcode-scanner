@@ -6,20 +6,21 @@
     <title>Barkod Listesi</title>
     <script>
         function loadBarcodes() {
-            let barcodeData = localStorage.getItem("lastBarcode");
-            if (barcodeData) {
-                let barcodeList = document.getElementById("barcodeTable");
+            let barcodeList = JSON.parse(localStorage.getItem("barcodeList")) || [];
+            let barcodeTable = document.getElementById("barcodeTable");
+
+            barcodeList.forEach(barcodeData => {
                 const barcodeParts = barcodeData.split("$");
                 const material = barcodeParts[1] || "Bilinmeyen";
                 const quantity = barcodeParts[3] || "0";
 
                 let row = `<tr><td>${material}</td><td>${quantity}</td></tr>`;
-                barcodeList.innerHTML += row;
-            }
+                barcodeTable.innerHTML += row;
+            });
         }
 
         function clearList() {
-            localStorage.removeItem("lastBarcode");
+            localStorage.removeItem("barcodeList");
             document.getElementById("barcodeTable").innerHTML = "";
         }
 
