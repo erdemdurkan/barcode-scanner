@@ -118,6 +118,7 @@
         let scannedBarcodes = [];
         let scanner;
         let scannerOpen = false;
+        let isScanning = false;
         const barcodeTable = document.getElementById("barcodeTable");
 
         function openScanner() {
@@ -142,7 +143,6 @@
                 .then(function (stream) {
                     let videoElement = document.getElementById("video");
                     videoElement.srcObject = stream;
-
                     scanner = new ZXing.BrowserMultiFormatReader();
                 })
                 .catch(function (error) {
@@ -164,8 +164,9 @@
         }
 
         function scanBarcode() {
-            if (!scanner) return;
+            if (!scanner || isScanning) return;
             
+            isScanning = true;
             scanner.decodeFromVideoDevice(undefined, 'video', (result, err) => {
                 if (result) {
                     triggerFeedback();
@@ -175,6 +176,7 @@
                     
                     scannedBarcodes.push({ material, quantity });
                     updateTable();
+                    isScanning = false; // Tekrar okutmak için hazır hale getir
                 }
             });
         }
@@ -215,8 +217,19 @@
                 return;
             }
 
-            const emailBody = scannedBarcodes.map(item => `Malzeme: ${item.material} - Adet: ${item.quantity}`).join("%0A");
-            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Barkod Talep Listesi&body=${emailBody}`;
+            let emailBody = `<table border="1">
+                <tr>
+                    <th>Malzeme Adı</th>
+                    <th>Adet</th>
+                </tr>`;
+
+            scannedBarcodes.forEach(item => {
+                emailBody += `<tr><td>${item.material}</td><td>${item.quantity}</td></tr>`;
+            });
+
+            emailBody += `</table>`;
+
+            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Barkod Talep Listesi&body=${encodeURIComponent(emailBody)}`;
         }
     </script>
 </body>
