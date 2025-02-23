@@ -22,6 +22,10 @@
             background: white;
             color: black;
         }
+        #scanner-container, #list-container {
+            display: none;
+            padding: 20px;
+        }
         video {
             width: 100%;
             max-width: 500px;
@@ -47,7 +51,7 @@
             color: white;
         }
         .start-btn { background: #4CAF50; }
-        .clear-btn { background: red; }
+        .list-btn { background: orange; }
         .email-btn { background: blue; }
         table {
             width: 100%;
@@ -66,30 +70,38 @@
 <body>
 
     <h1>Barkod Okuyucu</h1>
-    <video id="video" autoplay></video>
-    <br>
-    <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Malzeme Adı</th>
-                <th>Adet</th>
-                <th>Sil</th>
-            </tr>
-        </thead>
-        <tbody id="barcodeTable"></tbody>
-    </table>
+    <!-- Barkod Okuyucu -->
+    <div id="scanner-container">
+        <video id="video" autoplay></video>
+        <br>
+        <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
+    </div>
+
+    <!-- Barkod Listesi -->
+    <div id="list-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Malzeme Adı</th>
+                    <th>Adet</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody id="barcodeTable"></tbody>
+        </table>
+    </div>
 
     <div id="bottom-menu">
-        <button class="clear-btn" onclick="clearTable()">🗑 Listeyi Temizle</button>
+        <button class="start-btn" onclick="showScanner()">📷 Barkod Okuyucu</button>
+        <button class="list-btn" onclick="showList()">📜 Listeyi Göster</button>
         <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
     </div>
 
     <script>
         let scannedBarcodes = [];
         let scanner;
-        let isScanning = false; // 🔴 Barkod okutma kilidi (Seri okutmayı engellemek için)
+        let isScanning = false;
         const barcodeTable = document.getElementById("barcodeTable");
 
         function startScanner() {
@@ -113,8 +125,7 @@
         function scanBarcode() {
             if (!scanner || isScanning) return;
             
-            isScanning = true; // 🔴 Barkod okunduktan sonra tekrar okutmayı engelle
-            
+            isScanning = true;
             scanner.decodeOnceFromVideoDevice(undefined, 'video')
                 .then((result) => {
                     triggerFeedback();
@@ -124,7 +135,7 @@
                     
                     scannedBarcodes.push({ material, quantity });
                     updateTable();
-                    setTimeout(() => isScanning = false, 2000); // 2 saniye sonra tekrar okutmaya izin ver
+                    setTimeout(() => isScanning = false, 2000);
                 })
                 .catch((err) => {
                     console.error("Barkod okuma hatası:", err);
@@ -184,7 +195,18 @@
             window.location.href = mailtoLink;
         }
 
-        startScanner(); // Sayfa açıldığında kamerayı başlat
+        function showScanner() {
+            document.getElementById("scanner-container").style.display = "block";
+            document.getElementById("list-container").style.display = "none";
+            startScanner();
+        }
+
+        function showList() {
+            document.getElementById("scanner-container").style.display = "none";
+            document.getElementById("list-container").style.display = "block";
+        }
+
+        showScanner(); // Sayfa açıldığında kamerayı göster
     </script>
 </body>
 </html>
