@@ -89,7 +89,7 @@
     <script>
         let scannedBarcodes = [];
         let scanner;
-        let isScanning = false;
+        let isScanning = false; // 🔴 Barkod okutma kilidi (Seri okutmayı engellemek için)
         const barcodeTable = document.getElementById("barcodeTable");
 
         function startScanner() {
@@ -113,9 +113,10 @@
         function scanBarcode() {
             if (!scanner || isScanning) return;
             
-            isScanning = true; // Seri çekimi engelle
-            scanner.decodeFromVideoDevice(undefined, 'video', (result, err) => {
-                if (result) {
+            isScanning = true; // 🔴 Barkod okunduktan sonra tekrar okutmayı engelle
+            
+            scanner.decodeOnceFromVideoDevice(undefined, 'video')
+                .then((result) => {
                     triggerFeedback();
                     const barcodeData = result.text.split("$");
                     const material = barcodeData[1] || "Bilinmeyen";
@@ -123,9 +124,12 @@
                     
                     scannedBarcodes.push({ material, quantity });
                     updateTable();
-                    setTimeout(() => isScanning = false, 2000); // 2 saniye bekle, sonra tekrar okutulabilir
-                }
-            });
+                    setTimeout(() => isScanning = false, 2000); // 2 saniye sonra tekrar okutmaya izin ver
+                })
+                .catch((err) => {
+                    console.error("Barkod okuma hatası:", err);
+                    isScanning = false;
+                });
         }
 
         function triggerFeedback() {
