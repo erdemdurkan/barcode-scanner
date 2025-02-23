@@ -19,50 +19,70 @@
             text-align: center;
             margin: 0;
             padding: 0;
-            background: black;
-            color: white;
+            background: white;
+            color: black;
         }
         #scanner-container {
-            position: relative;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
+            z-index: 1000;
         }
         video {
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid white;
+            margin-top: 20px;
         }
         #target-box {
             position: absolute;
-            width: 250px;
-            height: 250px;
+            width: 100px;
+            height: 100px;
             border: 4px solid lime;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: rgba(0, 255, 0, 0.1);
+            transition: top 0.1s, left 0.1s;
         }
-        #controls {
+        #close-btn {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            background: red;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        #bottom-menu {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
             display: flex;
-            gap: 10px;
+            justify-content: space-around;
+            padding: 15px;
+            background: black;
+            color: white;
         }
         button {
-            padding: 15px;
+            padding: 10px;
             font-size: 18px;
             border: none;
             cursor: pointer;
             border-radius: 5px;
+            color: white;
         }
-        .start-btn { background: #4CAF50; color: white; }
-        .clear-btn { background: red; color: white; }
-        .email-btn { background: blue; color: white; }
+        .start-btn { background: #4CAF50; }
+        .clear-btn { background: red; }
+        .email-btn { background: blue; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -78,17 +98,14 @@
     </style>
 </head>
 <body>
+    
     <div id="scanner-container">
+        <button id="close-btn" onclick="closeScanner()">✖</button>
         <video id="video" autoplay></video>
         <div id="target-box"></div>
+        <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
     </div>
-    
-    <div id="controls">
-        <button class="start-btn" onclick="startScanner()">📷 Barkod Tarayıcıyı Başlat</button>
-        <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
-        <button class="clear-btn" onclick="clearTable()">🗑 Listeyi Temizle</button>
-    </div>
-    
+
     <table>
         <thead>
             <tr>
@@ -100,18 +117,35 @@
         <tbody id="barcodeTable"></tbody>
     </table>
 
+    <div id="bottom-menu">
+        <button class="start-btn" onclick="openScanner()">📷 Barkod Okuyucu</button>
+        <button class="clear-btn" onclick="clearTable()">🗑 Listeyi Temizle</button>
+        <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
+    </div>
+
     <script>
-        let scannerActive = false;
         let scannedBarcodes = [];
         const barcodeTable = document.getElementById("barcodeTable");
+        let scannerOpen = false;
+
+        function openScanner() {
+            document.getElementById("scanner-container").style.display = "flex";
+            scannerOpen = true;
+            startScanner();
+        }
+
+        function closeScanner() {
+            document.getElementById("scanner-container").style.display = "none";
+            scannerOpen = false;
+            let videoElement = document.getElementById("video");
+            if (videoElement.srcObject) {
+                let tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
+        }
 
         function startScanner() {
-            if (scannerActive) {
-                alert("Barkod tarayıcı zaten açık!");
-                return;
-            }
-            scannerActive = true;
-
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("Tarayıcınız kamerayı desteklemiyor!");
                 return;
@@ -128,15 +162,9 @@
 
                     const codeReader = new ZXing.BrowserMultiFormatReader();
                     codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
-                        if (result && scannerActive) {
-                            scannerActive = false;
-                            triggerFeedback(); // 🔊 Bip sesi ve titreşim ekliyoruz
-                            
-                            const barcodeData = result.text.split("$");
-                            const material = barcodeData[1] || "Bilinmeyen";
-                            const quantity = barcodeData[3] || "0";
-                            scannedBarcodes.push({ material, quantity });
-                            updateTable();
+                        if (result && scannerOpen) {
+                            document.getElementById("target-box").style.top = "50%";
+                            document.getElementById("target-box").style.left = "50%";
                         }
                     });
 
@@ -147,12 +175,26 @@
                 });
         }
 
+        function scanBarcode() {
+            const codeReader = new ZXing.BrowserMultiFormatReader();
+            codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+                if (result) {
+                    triggerFeedback();
+                    const barcodeData = result.text.split("$");
+                    const material = barcodeData[1] || "Bilinmeyen";
+                    const quantity = barcodeData[3] || "0";
+                    scannedBarcodes.push({ material, quantity });
+                    updateTable();
+                }
+            });
+        }
+
         function triggerFeedback() {
             if (navigator.vibrate) {
-                navigator.vibrate(200); // 📳 Telefonu 200ms titreştir
+                navigator.vibrate(200);
             }
             const beep = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
-            beep.play(); // 🔊 Bip sesi çal
+            beep.play();
         }
 
         function updateTable() {
@@ -178,13 +220,8 @@
         }
 
         function sendEmail() {
-            if (scannedBarcodes.length === 0) {
-                alert("Liste boş, mail gönderilemiyor!");
-                return;
-            }
-
             const emailBody = scannedBarcodes.map(item => `Malzeme: ${item.material} - Adet: ${item.quantity}`).join("%0A");
-            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Barkod Talep Listesi&body=${emailBody}`;
+            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Malzeme Talep Listesi&body=${emailBody}`;
         }
     </script>
 </body>
