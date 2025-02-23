@@ -22,8 +22,7 @@
             background: white;
             color: black;
         }
-        #scanner-container, #list-container {
-            display: none;
+        #scanner-container {
             padding: 10px;
         }
         video {
@@ -53,19 +52,6 @@
         }
         .start-btn { background: #4CAF50; }
         .list-btn { background: orange; }
-        .email-btn { background: blue; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            color: black;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: left;
-        }
     </style>
 </head>
 <body>
@@ -77,32 +63,15 @@
         <video id="video" autoplay></video>
     </div>
 
-    <!-- Barkod Listesi -->
-    <div id="list-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Malzeme Adı</th>
-                    <th>Adet</th>
-                    <th>Sil</th>
-                </tr>
-            </thead>
-            <tbody id="barcodeTable"></tbody>
-        </table>
-    </div>
-
     <div id="bottom-menu">
-        <button class="start-btn" onclick="showScanner()">📷 Barkod Okuyucu</button>
-        <button class="list-btn" onclick="showList()">📜 Listeyi Göster</button>
-        <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
+        <button class="start-btn" onclick="scanBarcode()">📷 Barkod Okuyucu</button>
+        <button class="list-btn" onclick="goToList()">📜 Listeyi Göster</button>
     </div>
 
     <script>
-        let scannedBarcodes = [];
         let scanner;
         let isScanning = false;
         let cameraStream;
-        const barcodeTable = document.getElementById("barcodeTable");
 
         function startScanner() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -123,28 +92,15 @@
                 });
         }
 
-        function stopScanner() {
-            if (cameraStream) {
-                let tracks = cameraStream.getTracks();
-                tracks.forEach(track => track.stop());
-                cameraStream = null;
-            }
-        }
-
         function scanBarcode() {
             if (!scanner || isScanning) return;
             
             isScanning = true;
             scanner.decodeOnceFromVideoDevice(undefined, 'video')
                 .then((result) => {
-                    triggerFeedback();
-                    const barcodeData = result.text.split("$");
-                    const material = barcodeData[1] || "Bilinmeyen";
-                    const quantity = barcodeData[3] || "0";
-                    
-                    scannedBarcodes.push({ material, quantity });
-                    updateTable();
-                    setTimeout(() => isScanning = false, 1000);
+                    const barcodeData = result.text;
+                    localStorage.setItem("lastBarcode", barcodeData); // Barkodu kaydet
+                    window.location.href = "index2.html"; // Listeye yönlendir
                 })
                 .catch((err) => {
                     console.error("Barkod okuma hatası:", err);
@@ -152,66 +108,11 @@
                 });
         }
 
-        function triggerFeedback() {
-            if (navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-            const beep = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
-            beep.play();
+        function goToList() {
+            window.location.href = "index2.html";
         }
 
-        function updateTable() {
-            barcodeTable.innerHTML = "";
-            scannedBarcodes.forEach((item, index) => {
-                const row = `<tr>
-                    <td>${item.material}</td>
-                    <td>${item.quantity}</td>
-                    <td><button onclick="deleteRow(${index})">Sil</button></td>
-                </tr>`;
-                barcodeTable.innerHTML += row;
-            });
-        }
-
-        function deleteRow(index) {
-            scannedBarcodes.splice(index, 1);
-            updateTable();
-        }
-
-        function sendEmail() {
-            if (scannedBarcodes.length === 0) {
-                alert("Liste boş, mail gönderilemiyor!");
-                return;
-            }
-
-            let emailBody = `<html><body><table border="1" style="border-collapse: collapse;">
-                <tr>
-                    <th style="padding: 5px; background: #ddd;">Malzeme Adı</th>
-                    <th style="padding: 5px; background: #ddd;">Adet</th>
-                </tr>`;
-
-            scannedBarcodes.forEach(item => {
-                emailBody += `<tr><td style="padding: 5px;">${item.material}</td><td style="padding: 5px;">${item.quantity}</td></tr>`;
-            });
-
-            emailBody += `</table></body></html>`;
-
-            let mailtoLink = `mailto:hedefmail@ornek.com?subject=Barkod Talep Listesi&body=${encodeURIComponent(emailBody)}`;
-            window.location.href = mailtoLink;
-        }
-
-        function showScanner() {
-            document.getElementById("scanner-container").style.display = "block";
-            document.getElementById("list-container").style.display = "none";
-            startScanner();
-        }
-
-        function showList() {
-            document.getElementById("scanner-container").style.display = "none";
-            document.getElementById("list-container").style.display = "block";
-            stopScanner();
-        }
-
-        showScanner(); // Sayfa açıldığında kamerayı göster
+        startScanner();
     </script>
 </body>
 </html>
