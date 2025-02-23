@@ -22,37 +22,11 @@
             background: white;
             color: black;
         }
-        #scanner-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 1000;
-        }
         video {
-            width: 90%;
+            width: 100%;
             max-width: 500px;
-            border: 2px solid white;
-            margin-top: 20px;
-        }
-        #close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 20px;
-            background: red;
-            color: white;
-            padding: 5px 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
+            border: 2px solid black;
+            margin-top: 10px;
         }
         #bottom-menu {
             position: fixed;
@@ -90,12 +64,11 @@
     </style>
 </head>
 <body>
-    
-    <div id="scanner-container">
-        <button id="close-btn" onclick="closeScanner()">✖</button>
-        <video id="video" autoplay></video>
-        <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
-    </div>
+
+    <h1>Barkod Okuyucu</h1>
+    <video id="video" autoplay></video>
+    <br>
+    <button class="start-btn" onclick="scanBarcode()">✅ Barkodu Okut</button>
 
     <table>
         <thead>
@@ -109,7 +82,6 @@
     </table>
 
     <div id="bottom-menu">
-        <button class="start-btn" onclick="openScanner()">📷 Barkod Okuyucu</button>
         <button class="clear-btn" onclick="clearTable()">🗑 Listeyi Temizle</button>
         <button class="email-btn" onclick="sendEmail()">✉ Mail Gönder</button>
     </div>
@@ -117,21 +89,8 @@
     <script>
         let scannedBarcodes = [];
         let scanner;
-        let scannerOpen = false;
         let isScanning = false;
         const barcodeTable = document.getElementById("barcodeTable");
-
-        function openScanner() {
-            document.getElementById("scanner-container").style.display = "flex";
-            scannerOpen = true;
-            startScanner();
-        }
-
-        function closeScanner() {
-            document.getElementById("scanner-container").style.display = "none";
-            scannerOpen = false;
-            stopScanner();
-        }
 
         function startScanner() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -151,22 +110,10 @@
                 });
         }
 
-        function stopScanner() {
-            let videoElement = document.getElementById("video");
-            if (videoElement.srcObject) {
-                let tracks = videoElement.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-                videoElement.srcObject = null;
-            }
-            if (scanner) {
-                scanner.reset();
-            }
-        }
-
         function scanBarcode() {
             if (!scanner || isScanning) return;
             
-            isScanning = true;
+            isScanning = true; // Seri çekimi engelle
             scanner.decodeFromVideoDevice(undefined, 'video', (result, err) => {
                 if (result) {
                     triggerFeedback();
@@ -176,7 +123,7 @@
                     
                     scannedBarcodes.push({ material, quantity });
                     updateTable();
-                    isScanning = false; // Tekrar okutmak için hazır hale getir
+                    setTimeout(() => isScanning = false, 2000); // 2 saniye bekle, sonra tekrar okutulabilir
                 }
             });
         }
@@ -217,20 +164,23 @@
                 return;
             }
 
-            let emailBody = `<table border="1">
+            let emailBody = `<html><body><table border="1" style="border-collapse: collapse;">
                 <tr>
-                    <th>Malzeme Adı</th>
-                    <th>Adet</th>
+                    <th style="padding: 5px; background: #ddd;">Malzeme Adı</th>
+                    <th style="padding: 5px; background: #ddd;">Adet</th>
                 </tr>`;
 
             scannedBarcodes.forEach(item => {
-                emailBody += `<tr><td>${item.material}</td><td>${item.quantity}</td></tr>`;
+                emailBody += `<tr><td style="padding: 5px;">${item.material}</td><td style="padding: 5px;">${item.quantity}</td></tr>`;
             });
 
-            emailBody += `</table>`;
+            emailBody += `</table></body></html>`;
 
-            window.location.href = `mailto:erdmdrkn@gmail.com?subject=Barkod Talep Listesi&body=${encodeURIComponent(emailBody)}`;
+            let mailtoLink = `mailto:hedefmail@ornek.com?subject=Barkod Talep Listesi&body=${encodeURIComponent(emailBody)}`;
+            window.location.href = mailtoLink;
         }
+
+        startScanner(); // Sayfa açıldığında kamerayı başlat
     </script>
 </body>
 </html>
