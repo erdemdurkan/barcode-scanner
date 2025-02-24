@@ -12,7 +12,6 @@
                 .then(() => console.log("Service Worker Kaydedildi!"))
                 .catch(error => console.log("Service Worker Hatası:", error));
         }
-        
     </script>
     <style>
         body {
@@ -75,6 +74,7 @@
         let cameraStream;
         let barcodeList = JSON.parse(localStorage.getItem("barcodeList")) || []; // 📌 Daha önce eklenen barkodları koru
 
+        // Kamera ve barkod okuyucu başlatma
         function startScanner() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("Tarayıcınız kamerayı desteklemiyor!");
@@ -87,6 +87,15 @@
                     videoElement.srcObject = stream;
                     cameraStream = stream;
                     scanner = new ZXing.BrowserMultiFormatReader();
+                    scanner.decodeOnceFromVideoDevice(undefined, 'video') // Barkod okuma başlatılıyor
+                        .then((result) => {
+                            const barcodeData = result.text;
+                            barcodeList.push(barcodeData); // 📌 Listeye her okutulan barkodu ekle
+                            localStorage.setItem("barcodeList", JSON.stringify(barcodeList)); // 📌 Barkodları kaydet
+                        })
+                        .catch((err) => {
+                            console.error("Barkod okuma hatası:", err);
+                        });
                 })
                 .catch(function (error) {
                     alert("Kamera erişim hatası: " + error.message);
@@ -96,19 +105,9 @@
 
         function scanBarcode() {
             if (!scanner || isScanning) return;
-            
             isScanning = true;
-            scanner.decodeOnceFromVideoDevice(undefined, 'video')
-                .then((result) => {
-                    const barcodeData = result.text;
-                    barcodeList.push(barcodeData); // 📌 Listeye her okutulan barkodu ekle
-                    localStorage.setItem("barcodeList", JSON.stringify(barcodeList)); // 📌 Barkodları kaydet
-                    setTimeout(() => isScanning = false, 1000);
-                })
-                .catch((err) => {
-                    console.error("Barkod okuma hatası:", err);
-                    isScanning = false;
-                });
+            startScanner();
+            setTimeout(() => isScanning = false, 1000);
         }
 
         function goToList() {
