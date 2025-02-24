@@ -74,7 +74,8 @@
     </div>
 
     <div id="bottom-menu">
-        <button class="start-btn" onclick="scanBarcode()">📷 Barkod Okuyucu</button>
+        <button class="start-btn" onclick="startScanner()">📷 Kamerayı Aç</button>
+        <button class="list-btn" onclick="scanBarcode()">📜 Barkodu Tara</button>
         <button class="list-btn" onclick="goToList()">📜 Listeyi Göster</button>
     </div>
 
@@ -98,6 +99,7 @@
                     videoElement.srcObject = stream;
                     cameraStream = stream;
                     scanner = new ZXing.BrowserMultiFormatReader();
+                    console.log("Kamera başarıyla açıldı.");
                 })
                 .catch(function (error) {
                     alert("Kamera erişim hatası: " + error.message);
