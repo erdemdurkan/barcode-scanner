@@ -12,6 +12,7 @@
                 .then(() => console.log("Service Worker Kaydedildi!"))
                 .catch(error => console.log("Service Worker Hatası:", error));
         }
+        
     </script>
     <style>
         body {
@@ -23,7 +24,6 @@
             color: black;
         }
         #scanner-container {
-            position: relative;
             padding: 10px;
         }
         video {
@@ -32,15 +32,6 @@
             height: auto;
             border: 2px solid black;
             margin-top: 10px;
-        }
-        canvas {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 500px;
-            height: auto;
         }
         #bottom-menu {
             position: fixed;
@@ -68,14 +59,13 @@
 
     <h1>Barkod Okuyucu</h1>
 
+    <!-- Barkod Okuyucu -->
     <div id="scanner-container">
         <video id="video" autoplay></video>
-        <canvas id="overlay"></canvas>
     </div>
 
     <div id="bottom-menu">
-        <button class="start-btn" onclick="startScanner()">📷 Kamerayı Aç</button>
-        <button class="list-btn" onclick="scanBarcode()">📜 Barkodu Tara</button>
+        <button class="start-btn" onclick="scanBarcode()">📷 Barkod Okuyucu</button>
         <button class="list-btn" onclick="goToList()">📜 Listeyi Göster</button>
     </div>
 
@@ -83,9 +73,7 @@
         let scanner;
         let isScanning = false;
         let cameraStream;
-        let barcodeList = JSON.parse(localStorage.getItem("barcodeList")) || [];
-        let overlay = document.getElementById("overlay");
-        let ctx = overlay.getContext("2d");
+        let barcodeList = JSON.parse(localStorage.getItem("barcodeList")) || []; // 📌 Daha önce eklenen barkodları koru
 
         function startScanner() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -99,7 +87,6 @@
                     videoElement.srcObject = stream;
                     cameraStream = stream;
                     scanner = new ZXing.BrowserMultiFormatReader();
-                    console.log("Kamera başarıyla açıldı.");
                 })
                 .catch(function (error) {
                     alert("Kamera erişim hatası: " + error.message);
@@ -114,10 +101,8 @@
             scanner.decodeOnceFromVideoDevice(undefined, 'video')
                 .then((result) => {
                     const barcodeData = result.text;
-                    const { x, y, width, height } = result.barcodePosition;
-                    drawBoundingBox(x, y, width, height);
-                    barcodeList.push(barcodeData);
-                    localStorage.setItem("barcodeList", JSON.stringify(barcodeList));
+                    barcodeList.push(barcodeData); // 📌 Listeye her okutulan barkodu ekle
+                    localStorage.setItem("barcodeList", JSON.stringify(barcodeList)); // 📌 Barkodları kaydet
                     setTimeout(() => isScanning = false, 1000);
                 })
                 .catch((err) => {
@@ -126,18 +111,11 @@
                 });
         }
 
-        function drawBoundingBox(x, y, width, height) {
-            overlay.width = video.videoWidth;
-            overlay.height = video.videoHeight;
-            ctx.clearRect(0, 0, overlay.width, overlay.height);
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x, y, width, height);
-        }
-
         function goToList() {
             window.location.href = "index2.html";
         }
+
+        startScanner();
     </script>
 </body>
 </html>
